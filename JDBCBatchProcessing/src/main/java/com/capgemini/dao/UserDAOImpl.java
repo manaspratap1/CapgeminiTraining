@@ -6,59 +6,63 @@ import com.capgemini.repository.UserRepository;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class UserDAOImpl implements UserDAO{
-    public void insertUser(User user){
-        String sql = "INSERT INTO users(name, email) VALUES(?, ?)";
+    public void insertBatch(List<User> users) throws SQLException {
 
-        try(Connection conn = UserRepository.getConnection();
-            PreparedStatement pstmt = conn.prepareStatement(sql)){
+        Connection conn = UserRepository.getConnection();
 
-            pstmt.setString(1, user.getName());
-            pstmt.setString(2, user.getEmail());
+        String insertQuery = "INSERT INTO users(name, email) VALUES(?, ?)";
+        PreparedStatement pstmt = conn.prepareStatement(insertQuery);
 
-            pstmt.executeUpdate();
-            System.out.println("User inserted");
-        }catch(Exception e){
-            e.printStackTrace();
+        for(User u: users){
+            pstmt.setString(1, u.getName());
+            pstmt.setString(2, u.getEmail());
+            pstmt.addBatch();
         }
+
+        int[] result = pstmt.executeBatch();
+        System.out.println("Inserted Rows "+ result.length);
+        conn.close();
     }
 
-    public void updateUser(User user){
-        String sql = "UPDATE users SET name=?, email=? WHERE id=?";
+    public void updateBatch(List<User> users) throws SQLException{
+        Connection conn = UserRepository.getConnection();
 
-        try(Connection conn = UserRepository.getConnection();
-            PreparedStatement pstmt = conn.prepareStatement(sql)){
+        String updateQuery = "UPDATE users SET name=?, email=? where id=?";
+        PreparedStatement pstmt = conn.prepareStatement(updateQuery);
 
-            pstmt.setString(1, user.getName());
-            pstmt.setString(2, user.getEmail());
-            pstmt.setInt(3, user.getId());
-
-            int rowsUpdated = pstmt.executeUpdate();
-            System.out.println("Rows updated: " + rowsUpdated);
-
-        }catch(Exception e){
-            e.printStackTrace();
+        for(User u: users){
+            pstmt.setString(1, u.getName());
+            pstmt.setString(2, u.getEmail());
+            pstmt.setInt(3, u.getId());
+            pstmt.addBatch();
         }
+
+        int[] result = pstmt.executeBatch();
+        System.out.println("Updated Rows "+ result.length);
+        conn.close();
     }
 
-    public void deleteUser(int id) {
+    public void deleteBatch(List<Integer> userIds) throws SQLException{
 
-        String sql = "DELETE FROM users WHERE id=?";
+        Connection conn = UserRepository.getConnection();
 
-        try (Connection conn = UserRepository.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        String deleteQuery = "DELETE FROM users WHERE id=?";
 
+        PreparedStatement pstmt = conn.prepareStatement(deleteQuery);
+
+        for(int id: userIds){
             pstmt.setInt(1, id);
-
-            int rowsDeleted = pstmt.executeUpdate();
-            System.out.println("Rows deleted: " + rowsDeleted);
-
-        } catch (Exception e) {
-            e.printStackTrace();
+            pstmt.addBatch();
         }
+
+        int[] result = pstmt.executeBatch();
+        System.out.println("Deleted Rows "+ result.length);
+        conn.close();
     }
 
     @Override
