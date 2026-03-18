@@ -8,10 +8,7 @@ import lombok.Data;
 public class AccountDto {
 
     private Long balance;
-
-    @Enumerated(EnumType.STRING)
     private AccountType accountType;
-
     private String holderEmail;
     private String accountSecureKey;
     private String accountHolderName;
